@@ -51,6 +51,8 @@ extern "C" {
     }
     
     void app_main() {
+        esp_err_t ret;
+
         esp_vfs_fat_sdmmc_mount_config_t mount_config {
             .format_if_mount_failed = true,
             .max_files = 5,
@@ -58,5 +60,25 @@ extern "C" {
         };
         sdmmc_card_t *card;
         ESP_LOGI(TAG, "Initializing sd card");
+        sdmmc_host_t host = SDSPI_HOST_DEFAULT();
+        host.unaligned_multi_block_rw_max_chunk_size = 8;
+
+        spi_bus_config_t bus_config {
+            bus_config.mosi_io_num = MOSI_PIN,
+            bus_config.miso_io_num = MISO_PIN,
+            bus_config.sclk_io_num = SCK_PIN,
+            bus_config.quadwp_io_num = -1,
+            bus_config.quadhd_io_num = -1,
+            bus_config.max_transfer_sz = 4000,
+        };
+
+        ret = spi_bus_initialize((spi_host_device_t)host.slot, &bus_config, SDSPI_DEFAULT_DMA);
+        if(ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to initialize bus");
+        }
+
+        sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
+        slot_config.gpio_cs = (gpio_num_t)CS_PIN;
+        slot_config.host_id = (spi_host_device_t)host.slot;
     }
 }
