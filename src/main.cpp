@@ -4,6 +4,12 @@
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
 
+#define MOUNT_POINT "/sdcard"
+#define MISO_PIN 4
+#define MOSI_PIN 15
+#define CS_PIN 13
+#define SCK_PIN 14
+
 extern "C" {
     static const char* TAG = "MAIN";
 
@@ -45,6 +51,12 @@ extern "C" {
     }
     
     void app_main() {
-        
+        esp_vfs_fat_sdmmc_mount_config_t mount_config {
+            .format_if_mount_failed = true,
+            .max_files = 5,
+            .allocation_unit_size = 16 * 1024
+        };
+        sdmmc_card_t *card;
+        ESP_LOGI(TAG, "Initializing sd card");
     }
 }
