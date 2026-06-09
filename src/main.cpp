@@ -54,11 +54,11 @@ extern "C" {
         esp_err_t ret;
 
         //configs de montagem para o uso do sd
-        esp_vfs_fat_sdmmc_mount_config_t mount_config {
-            .format_if_mount_failed = true,
-            .max_files = 5,
-            .allocation_unit_size = 16 * 1024
-        };
+        esp_vfs_fat_sdmmc_mount_config_t mount_config = {};
+        mount_config.format_if_mount_failed = true;
+        mount_config.max_files = 5;
+        mount_config.allocation_unit_size = 16 * 1024;
+
         sdmmc_card_t *card;
         ESP_LOGI(TAG, "Initializing sd card");
 
@@ -67,14 +67,13 @@ extern "C" {
         host.unaligned_multi_block_rw_max_chunk_size = 8;
 
         //faz a config do bus (como as informacoes serao enviadas, nesse caso via pino MOSI, MISO, SCK e -1 nas q nao vai ser usada)
-        spi_bus_config_t bus_config {
-            bus_config.mosi_io_num = MOSI_PIN,
-            bus_config.miso_io_num = MISO_PIN,
-            bus_config.sclk_io_num = SCK_PIN,
-            bus_config.quadwp_io_num = -1,
-            bus_config.quadhd_io_num = -1,
-            bus_config.max_transfer_sz = 4000,
-        };
+        spi_bus_config_t bus_config = {};
+        bus_config.mosi_io_num = MOSI_PIN;
+        bus_config.miso_io_num = MISO_PIN;
+        bus_config.sclk_io_num = SCK_PIN;
+        bus_config.quadwp_io_num = -1;
+        bus_config.quadhd_io_num = -1;
+        bus_config.max_transfer_sz = 4000;
 
         ret = spi_bus_initialize((spi_host_device_t)host.slot, &bus_config, SDSPI_DEFAULT_DMA);
         if(ret != ESP_OK) {
