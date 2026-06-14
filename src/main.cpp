@@ -52,56 +52,70 @@ extern "C" {
     
     void app_main() {
         esp_err_t ret;
-
-        //configs de montagem para o uso do sd
-        esp_vfs_fat_sdmmc_mount_config_t mount_config = {};
-        mount_config.format_if_mount_failed = true;
-        mount_config.max_files = 5;
-        mount_config.allocation_unit_size = 16 * 1024;
-
+        
+        esp_vfs_fat_sdmmc_mount_config_t mountConfig = {
+            .format_if_mount_failed = true,
+            .max_files = 5,
+            .allocation_unit_size = 16 * 1024,
+            .disk_status_check_enable = false,
+            .use_one_fat = false
+        };
+        
         sdmmc_card_t *card;
-        ESP_LOGI(TAG, "Initializing sd card");
+        
+        ESP_LOGI(TAG, "Initializing SD card");
 
-        //define o host
+
+        ESP_LOGI(TAG, "Using SPI peripheral");
         sdmmc_host_t host = SDSPI_HOST_DEFAULT();
-        host.unaligned_multi_block_rw_max_chunk_size = 8;
+        host.max_freq_khz = 4000;
 
-        //faz a config do bus (como as informacoes serao enviadas, nesse caso via pino MOSI, MISO, SCK e -1 nas q nao vai ser usada)
-        spi_bus_config_t bus_config = {};
-        bus_config.mosi_io_num = MOSI_PIN;
-        bus_config.miso_io_num = MISO_PIN;
-        bus_config.sclk_io_num = SCK_PIN;
-        bus_config.quadwp_io_num = -1;
-        bus_config.quadhd_io_num = -1;
-        bus_config.max_transfer_sz = 4000;
+        spi_bus_config_t bus_cfg = {};
+        bus_cfg.sclk_io_num = SCK_PIN,
+        bus_cfg.miso_io_num = MISO_PIN,
+        bus_cfg.mosi_io_num = MOSI_PIN,
+        bus_cfg.quadwp_io_num = -1,
+        bus_cfg.quadhd_io_num = -1,
+        bus_cfg.max_transfer_sz = 4000,
 
-        ret = spi_bus_initialize((spi_host_device_t)host.slot, &bus_config, SDSPI_DEFAULT_DMA);
-        if(ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to initialize bus");
+        ret = spi_bus_initialize((spi_host_device_t)host.slot, &bus_cfg, SDSPI_DEFAULT_DMA);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to initialize bus.");
+            return;
         }
+
+        ESP_LOGI(TAG, "Bus initialized");
 
         sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
         slot_config.gpio_cs = (gpio_num_t)CS_PIN;
         slot_config.host_id = (spi_host_device_t)host.slot;
 
         ESP_LOGI(TAG, "Mounting filesystem");
-        ret = esp_vfs_fat_sdspi_mount(MOUNT_POINT, &host, &slot_config, &mount_config, &card);
+        ret = esp_vfs_fat_sdspi_mount(MOUNT_POINT, &host, &slot_config, &mountConfig, &card);
+
         if(ret != ESP_OK) {
             if(ret == ESP_FAIL) {
-                ESP_LOGE(TAG, "Failed to mount filesytstem");
+                ESP_LOGE(TAG, "Couldnt mount filesystem");
+            } else {
+                ESP_LOGE(TAG, "Failed to initialize the card (%s)", esp_err_to_name(ret));
+                return;
             }
-            ESP_LOGE(TAG, "Failed to initialize card (%s)", esp_err_to_name(ret));
         }
-        ESP_LOGI(TAG, "Sucessfully mounted filesystem");
 
         sdmmc_card_print_info(stdout, card);
 
+        //lets create a file
         const char *file_hello = MOUNT_POINT"/hello.txt";
         char data[64];
         snprintf(data, 64, "%s %s!\n", "Hello", card->cid.name);
         ret = writeFile(file_hello, data);
         if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Couldnt write the file (%s)", esp_err_to_name(ret));
+            ESP_LOGE(TAG, "SOMETHING WENT WRONG");
+            return;
+        }
+
+        while(true) {
+            ESP_LOGI(TAG, "It worked");
         }
     }
 }
