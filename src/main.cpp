@@ -5,7 +5,7 @@
 #include "sdmmc_cmd.h"
 
 #define MOUNT_POINT "/sdcard"
-#define MISO_PIN 4
+#define MISO_PIN 2
 #define MOSI_PIN 15
 #define CS_PIN 13
 #define SCK_PIN 14
@@ -68,7 +68,6 @@ extern "C" {
 
         ESP_LOGI(TAG, "Using SPI peripheral");
         sdmmc_host_t host = SDSPI_HOST_DEFAULT();
-        host.max_freq_khz = 4000;
 
         spi_bus_config_t bus_cfg = {};
         bus_cfg.sclk_io_num = SCK_PIN,
