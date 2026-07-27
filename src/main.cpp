@@ -1,4 +1,5 @@
 #include <iostream>
+#include "stdargs.h"
 #include "esp_log.h"
 #include <freertos/mpu_wrappers.h>
 #include "esp_vfs_fat.h"
@@ -49,10 +50,17 @@ extern "C" {
 
         return ESP_OK;
     }
+
+    vprintf_like_t log_output_changer(const char* esp_log, va_list args) {
+        return LogManager::getInstance().process_log(esp_log, args);
+    }
     
     void app_main() {
         esp_err_t ret;
-        
+
+        ESP_LOGI(TAG, "before using esp_log_set_vprintf");
+        esp_log_set_vprintf(log_output_changer);
+
         esp_vfs_fat_sdmmc_mount_config_t mountConfig = {
             .format_if_mount_failed = true,
             .max_files = 5,
