@@ -52,7 +52,11 @@ extern "C" {
     }
 
     vprintf_like_t log_output_changer(const char* esp_log, va_list args) {
-        return LogManager::getInstance().process_log(esp_log, args);
+        char buffer[256];
+        vsnprintf(buffer, sizeof(buffer), esp_log, args); 
+        LogManager::getInstance().process_log(esp_log, args);
+
+        return vprintf(esp_log, args);
     }
     
     void app_main() {
@@ -61,68 +65,7 @@ extern "C" {
         ESP_LOGI(TAG, "before using esp_log_set_vprintf");
         esp_log_set_vprintf(log_output_changer);
 
-        esp_vfs_fat_sdmmc_mount_config_t mountConfig = {
-            .format_if_mount_failed = true,
-            .max_files = 5,
-            .allocation_unit_size = 16 * 1024,
-            .disk_status_check_enable = false,
-            .use_one_fat = false
-        };
-        
-        sdmmc_card_t *card;
-        
-        ESP_LOGI(TAG, "Initializing SD card");
+        ESP_LOGI(TAG, "This is now being shown in stdout instead of UART")
 
-
-        ESP_LOGI(TAG, "Using SPI peripheral");
-        sdmmc_host_t host = SDSPI_HOST_DEFAULT();
-
-        spi_bus_config_t bus_cfg = {};
-        bus_cfg.sclk_io_num = SCK_PIN,
-        bus_cfg.miso_io_num = MISO_PIN,
-        bus_cfg.mosi_io_num = MOSI_PIN,
-        bus_cfg.quadwp_io_num = -1,
-        bus_cfg.quadhd_io_num = -1,
-        bus_cfg.max_transfer_sz = 4000,
-
-        ret = spi_bus_initialize((spi_host_device_t)host.slot, &bus_cfg, SDSPI_DEFAULT_DMA);
-        if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to initialize bus.");
-            return;
-        }
-
-        ESP_LOGI(TAG, "Bus initialized");
-
-        sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
-        slot_config.gpio_cs = (gpio_num_t)CS_PIN;
-        slot_config.host_id = (spi_host_device_t)host.slot;
-
-        ESP_LOGI(TAG, "Mounting filesystem");
-        ret = esp_vfs_fat_sdspi_mount(MOUNT_POINT, &host, &slot_config, &mountConfig, &card);
-
-        if(ret != ESP_OK) {
-            if(ret == ESP_FAIL) {
-                ESP_LOGE(TAG, "Couldnt mount filesystem");
-            } else {
-                ESP_LOGE(TAG, "Failed to initialize the card (%s)", esp_err_to_name(ret));
-                return;
-            }
-        }
-
-        sdmmc_card_print_info(stdout, card);
-
-        //lets create a file
-        const char *file_hello = MOUNT_POINT"/hello.txt";
-        char data[64];
-        snprintf(data, 64, "%s %s!\n", "Hello", card->cid.name);
-        ret = writeFile(file_hello, data);
-        if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "SOMETHING WENT WRONG");
-            return;
-        }
-
-        while(true) {
-            ESP_LOGI(TAG, "It worked");
-        }
     }
 }
