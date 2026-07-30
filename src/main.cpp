@@ -13,16 +13,16 @@
 #define SCK_PIN 14
 
 extern "C" {
-    LogManager& logManager = LogManager::getInstance();
     static const char* TAG = "MAIN";
     
     void app_main() {
+        LogManager::getInstance().init();
 
         ESP_LOGI(TAG, "before using esp_log_set_vprintf");
         ESP_LOGI(TAG, "This is being shown in UART");
 
         esp_log_set_vprintf([](const char *format, va_list args) -> int {
-            logManager.process_log(format, args);
+            LogManager::getInstance().process_log(format, args);
             return 0;
         });
 
@@ -33,6 +33,10 @@ extern "C" {
         ESP_LOGI(TAG, "This is now being shown in stdout instead of UART 3");
 
         ESP_LOGI(TAG, "This is now being shown in stdout instead of UART 4");
+
+        for(int i = 0; i < 10; i++) {
+            ESP_LOGI(TAG, "This is now being shown in stdout instead of UART %d", i);
+        }
 
     }
 }
