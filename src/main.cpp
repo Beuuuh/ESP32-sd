@@ -26,17 +26,6 @@ extern "C" {
             return 0;
         });
 
-        ESP_LOGI(TAG, "This is now being shown in stdout instead of UART");
-
-        ESP_LOGI(TAG, "This is now being shown in stdout instead of UART 2");
-
-        ESP_LOGI(TAG, "This is now being shown in stdout instead of UART 3");
-
-        ESP_LOGI(TAG, "This is now being shown in stdout instead of UART 4");
-
-        for(int i = 0; i < 10; i++) {
-            ESP_LOGI(TAG, "This is now being shown in stdout instead of UART %d", i);
-        }
-
+        ESP_LOGI(TAG, "after using esp_log_set_vprintf, no longer being shown in UART");
     }
 }
